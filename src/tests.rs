@@ -151,3 +151,14 @@ fn composite_key_sorting_works() {
     ids.sort();
     assert_eq!(ids, vec![2, 10]);
 }
+
+#[test]
+fn numeric_segment_sorts_numerically_not_lexically() {
+    let mut kv = Kv::new(MemoryBackend::new());
+    kv.set(key!["foo", 2u64], "small").unwrap();
+    kv.set(key!["foo", 10u64], "large").unwrap();
+    let prefix = key!["foo"];
+    let results: Vec<_> = kv.list::<String>().prefix(&prefix).iter().collect();
+    let decoded: Vec<_> = results.iter().map(|(_, v)| v.as_str()).collect();
+    assert_eq!(decoded, vec!["small", "large"]);
+}
