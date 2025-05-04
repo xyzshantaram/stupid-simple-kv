@@ -4,7 +4,7 @@ extern crate test;
 
 #[cfg(feature = "sqlite")]
 use stupid_simple_kv::storages::sqlite_backend::SqliteBackend;
-use stupid_simple_kv::{Kv, MemoryBackend, key};
+use stupid_simple_kv::{IntoKey, Kv, MemoryBackend};
 
 #[cfg(test)]
 mod benches {
@@ -16,9 +16,9 @@ mod benches {
         let mut kv = Kv::new(MemoryBackend::new());
         b.iter(|| {
             for i in 0..1000u64 {
-                let k = key!["num", i];
+                let k = ("num", i).into_key();
                 kv.set(k.clone(), black_box(i)).unwrap();
-                let _ = kv.get::<u64>(&k).unwrap();
+                let _ = kv.get::<_, u64>(&k).unwrap();
             }
         });
     }
@@ -27,7 +27,7 @@ mod benches {
     fn bench_key_encoding(b: &mut Bencher) {
         b.iter(|| {
             for i in 0u64..10000 {
-                black_box(key!["foo", i, "bar", true]);
+                black_box(("foo", i, "bar", true).into_key());
             }
         });
     }
@@ -39,7 +39,7 @@ mod benches {
         let mut kv = Kv::new(backend);
         b.iter(|| {
             for i in 0..1000u64 {
-                let k = key!["x", i];
+                let k = ("x", i).into_key();
                 kv.set(k.clone(), black_box(i)).unwrap();
                 let _ = kv.get::<u64>(&k).unwrap();
             }
