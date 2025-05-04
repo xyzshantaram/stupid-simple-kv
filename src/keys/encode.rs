@@ -71,13 +71,4 @@ impl KeyEncoder for bool {
     }
 }
 
-#[macro_export]
-macro_rules! key {
-    ($($part:expr),* $(,)?) => {{
-        let mut v = Vec::new();
-        $(
-            $crate::KeyEncoder::encode_key(&$part, &mut v);
-        )*
-        v
-    }};
-}
+
