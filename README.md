@@ -24,6 +24,7 @@ A dead-simple, extensible, typed, binary-sorted, key-value store for Rust.
 - **Optional SQLite backend** (`SqliteBackend`) via feature flag (`sqlite`).
 - **Easy pluggable backends:** Implement the `KvBackend` trait for your
   preferred storage.
+- **Store anything** Values are serialized to Vec&lt;u8&gt; using bincode.
 
 ---
 
