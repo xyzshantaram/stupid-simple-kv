@@ -1,5 +1,7 @@
-mod keys;
-pub use keys::KeyEncoder;
+pub mod keys {
+    pub mod decode;
+    pub mod encode;
+}
 
 pub mod storages {
     pub mod kv_backend;
@@ -8,8 +10,10 @@ pub mod storages {
     pub mod sqlite_backend;
 }
 
+pub use crate::keys::{decode::KeyDecoder, encode::KeyEncoder};
 pub use storages::kv_backend::{KvBackend, KvResult};
 pub use storages::memory_backend::MemoryBackend;
+
 pub mod utils {
     pub mod list_builder;
     pub use list_builder::KvListBuilder;
