@@ -1,10 +1,10 @@
-// src/storages/MemoryBackend.rs
 use crate::storages::kv_backend::{KvBackend, KvResult};
+use crate::keys::Key;
 use std::collections::{HashMap, HashSet};
 
 #[derive(Default)]
 pub struct MemoryBackend {
-    map: HashMap<Vec<u8>, Vec<u8>>,
+    map: HashMap<Key, Vec<u8>>,
 }
 impl MemoryBackend {
     pub fn new() -> Self {
@@ -12,14 +12,14 @@ impl MemoryBackend {
     }
 }
 impl KvBackend for MemoryBackend {
-    fn set(&mut self, key: Vec<u8>, value: Vec<u8>) -> KvResult<()> {
+    fn set(&mut self, key: Key, value: Vec<u8>) -> KvResult<()> {
         self.map.insert(key, value);
         Ok(())
     }
-    fn get(&self, key: &[u8]) -> KvResult<Option<Vec<u8>>> {
+    fn get(&self, key: &Key) -> KvResult<Option<Vec<u8>>> {
         Ok(self.map.get(key).cloned())
     }
-    fn delete(&mut self, key: &[u8]) -> KvResult<()> {
+    fn delete(&mut self, key: &Key) -> KvResult<()> {
         self.map.remove(key);
         Ok(())
     }
@@ -27,19 +27,18 @@ impl KvBackend for MemoryBackend {
         self.map.clear();
         Ok(())
     }
-    fn get_many<'a>(
-        &'a self,
-        keys: Vec<Vec<u8>>,
-    ) -> KvResult<Box<dyn Iterator<Item = Vec<u8>> + 'a>> {
-        let keyset: HashSet<Vec<u8>> = keys.into_iter().collect();
-        Ok(Box::new(
-            self.map
-                .iter()
-                .filter(move |(k, _)| keyset.contains(k.as_slice()))
-                .map(|(_, v)| v.clone()),
-        ))
+    fn get_many(&self, keys: Vec<Key>) -> KvResult<Box<dyn Iterator<Item = Vec<u8>> + Send + Sync + 'static>> {
+        let keyset: HashSet<Key> = keys.into_iter().collect();
+        let results = self.map
+            .iter()
+            .filter(move |(k, _)| keyset.contains(k))
+            .map(|(_, v)| v.clone())
+            .collect::<Vec<_>>()
+            .into_iter();
+        Ok(Box::new(results))
     }
-    fn keys<'a>(&'a self) -> KvResult<Box<dyn Iterator<Item = Vec<u8>> + 'a>> {
-        Ok(Box::new(self.map.keys().cloned()))
+    fn keys(&self) -> KvResult<Box<dyn Iterator<Item = Key> + Send + Sync + 'static>> {
+        let keys = self.map.keys().cloned().collect::<Vec<_>>().into_iter();
+        Ok(Box::new(keys))
     }
 }

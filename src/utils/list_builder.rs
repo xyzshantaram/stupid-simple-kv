@@ -1,11 +1,11 @@
-use crate::KvBackend;
+use crate::{KvBackend, Key, IntoKey};
 use std::marker::PhantomData;
 
 pub struct KvListBuilder<'a, B: KvBackend, T> {
     backend: &'a B,
-    start: Option<Vec<u8>>,
-    end: Option<Vec<u8>>,
-    prefix: Option<Vec<u8>>,
+    start: Option<Key>,
+    end: Option<Key>,
+    prefix: Option<Key>,
     _marker: PhantomData<T>,
 }
 
@@ -19,21 +19,19 @@ impl<'a, B: KvBackend, T> KvListBuilder<'a, B, T> {
             _marker: PhantomData,
         }
     }
-
-    pub fn start(mut self, key: &[u8]) -> Self {
-        self.start = Some(key.to_vec());
+    pub fn start<K: IntoKey>(mut self, key: K) -> Self {
+        self.start = Some(key.into_key());
         self
     }
-    pub fn end(mut self, key: &[u8]) -> Self {
-        self.end = Some(key.to_vec());
+    pub fn end<K: IntoKey>(mut self, key: K) -> Self {
+        self.end = Some(key.into_key());
         self
     }
-    pub fn prefix(mut self, prefix: &[u8]) -> Self {
-        self.prefix = Some(prefix.to_vec());
+    pub fn prefix<K: IntoKey>(mut self, prefix: K) -> Self {
+        self.prefix = Some(prefix.into_key());
         self
     }
-
-    pub fn iter(self) -> impl Iterator<Item = (Vec<u8>, T)> + 'a
+    pub fn iter(self) -> impl Iterator<Item = (Key, T)> + 'a
     where
         T: bincode::Decode<()>,
     {
@@ -42,7 +40,7 @@ impl<'a, B: KvBackend, T> KvListBuilder<'a, B, T> {
             .keys()
             .unwrap()
             .filter(|k| {
-                let prefix_ok = self.prefix.as_ref().is_none_or(|p| k.starts_with(p));
+                let prefix_ok = self.prefix.as_ref().is_none_or(|p| k.0.starts_with(&p.0));
                 let start_ok = self.start.as_ref().is_none_or(|s| k >= s);
                 let end_ok = self.end.as_ref().is_none_or(|e| k <= e);
                 prefix_ok && start_ok && end_ok
