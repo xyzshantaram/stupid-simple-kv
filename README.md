@@ -4,9 +4,9 @@ A dead-simple, extensible, typed, binary-sorted, key-value store for Rust.
 
 ## Features
 
-- **FoundationDB/Deno-style keys** - use the key![] macro for properly-sorted,
+- **FoundationDB/Deno-style keys** - use the `key![]` macro for properly-sorted,
   list-style keys
-  - **Type-safe decoding** - use the `decode_key!` macro to destructure binary
+  - **Type-safe decoding** - use the `decode_key!()` macro to destructure binary
     keys right back into typed Rust values
 - **Ergonomic builder API** for filtered iteration:
   ```rs
@@ -22,7 +22,7 @@ A dead-simple, extensible, typed, binary-sorted, key-value store for Rust.
 - **Optional SQLite backend** (`SqliteBackend`) via feature flag (`sqlite`).
 - **Easy pluggable backends:** Implement the `KvBackend` trait for your
   preferred storage.
-- **Store anything** Values are serialized to Vec&lt;u8&gt; using bincode.
+- **Store anything:** Values are serialized to `Vec<u8>` using bincode.
 
 ## Installation
 
