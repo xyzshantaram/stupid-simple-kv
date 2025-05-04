@@ -2,10 +2,18 @@
 name = "stupid-simple-kv"
 version = "0.1.0"
 edition = "2024"
+description = "A dead-simple, pluggable, binary-sorted key-value store for Rust with FoundationDB-style keys. In-memory and SQLite backends. Zero-boilerplate and easy iteration."
+license = "MIT OR Apache-2.0"
+authors = ["Siddharth S Singh <me@shantaram.xyz>"]
+homepage = "https://github.com/xyzshantaram/stupid-simple-kv"
+repository = "https://github.com/xyzshantaram/stupid-simple-kv"
+documentation = "https://docs.rs/stupid-simple-kv"
+readme = "README.md"
+keywords = ["kv", "key-value", "storage", "sqlite", "fdb"]
+categories = ["database", "caching", "data-structures", "storage"]
 
 [dependencies]
 bincode = "2.0.1"
-
 rusqlite = { version = "0.31", optional = true, features = ["blob"] }
 
 [features]
