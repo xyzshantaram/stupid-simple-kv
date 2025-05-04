@@ -1,69 +1,128 @@
 # stupid-simple-kv
 
-A dead-simple, extensible key-value storage library for Rust.
+A dead-simple, extensible, typed, binary-sorted, key-value store for Rust.
+
+---
 
 ## Features
 
-- Simple and transparent API.
-- Drop-in memory backend (`MemoryBackend`)
-- Easily extend with your own backends (disk, network, etc.).
-- Stores typed data using [`bincode`](https://docs.rs/bincode/latest/bincode/).
+- **FoundationDB/Deno-style keys** - use the key![] macro for properly-sorted,
+  list-style keys
+  - **Type-safe decoding** - use the `decode_key!` macro to destructure binary
+    keys right back into typed Rust values
+- **Ergonomic builder API** for filtered iteration:
+  ```rs
+  kv
+    .list::<T>()
+    .prefix(&key!["foo"])
+    .start(&key!["foo", 0])
+    .end(&key!["foo", 100])
+    .iter()
+  ```
+  Yields `(Vec<u8>, T)` pairs (key and value).
+- **In-memory backend** (`MemoryBackend`) included.
+- **Optional SQLite backend** (`SqliteBackend`) via feature flag (`sqlite`).
+- **Easy pluggable backends:** Implement the `KvBackend` trait for your
+  preferred storage.
+
+---
 
 ## Installation
-
-Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
 stupid-simple-kv = "0.1.0"
+
+# To get the SQLite backend:
+[dependencies]
+stupid-simple-kv = { version = "0.1.0", features = ["sqlite"] }
 ```
 
-## Basic Usage
+---
+
+## Quickstart
 
 ```rust
-use stupid_simple_kv::{Kv, MemoryBackend};
+use stupid_simple_kv::{Kv, MemoryBackend, key};
 
-fn main() {
-    let mut backend = MemoryBackend::new();
-    let mut kv = Kv::new(&mut backend);
+let mut backend = MemoryBackend::new();
+let mut kv = Kv::new(backend);
 
-    kv.set("answer", &42u32).unwrap();
-    let value: Option<u32> = kv.get("answer");
-    println!("Got: {:?}", value);
+// Store and fetch typed data
+kv.set(key!["answer"], 42u32).unwrap();
+let value: Option<u32> = kv.get(&key!["answer"]).unwrap();
+assert_eq!(value, Some(42));
+kv.delete(&key!["answer"]).unwrap();
+```
 
-    kv.delete("answer");
-    assert!(kv.get::<u32, _>("answer").is_none());
+---
+
+### Iteration and Filtering
+
+```rust
+use stupid_simple_kv::{Kv, MemoryBackend, key};
+
+let mut kv = Kv::new(MemoryBackend::new());
+for id in 1..=3 {
+    kv.set(key!["user", id], format!("user-{id}")).unwrap();
+}
+
+// Prefix filter:
+let users: Vec<_> = kv.list::<String>()
+    .prefix(&key!["user"])
+    .iter()
+    .collect();
+// users: Vec<(Vec<u8>, String)>
+
+for (key, val) in users {
+    println!("key: {:?}, value: {}", key, val);
 }
 ```
 
-### Iterating keys
+---
+
+### Decoding a binary key (destructuring)
+
+Parse the original values out of a composite key using the built-in macro:
 
 ```rust
-for key in kv.keys_iter() {
-    println!("Key: {}", key);
-}
+use stupid_simple_kv::{key, decode_key};
+let key = key!["foo", 42u64, true];
+let (namespace, id, flag) = decode_key!((str, u64, bool), &key);
+// namespace: &str == "foo", id: u64 == 42, flag: bool == true
 ```
 
-## Extending: Writing Your Own Backend
+You can match as many types as you support in encoding.
 
-Implement the `KvBackend` trait for your struct:
+---
+
+### Using SQLite backend (optional)
+
+Enable the feature:
+
+```toml
+[dependencies]
+stupid-simple-kv = { version = "0.1.0", features = ["sqlite"] }
+```
+
+Use in your code:
 
 ```rust
-use stupid_simple_kv::KvBackend;
+use stupid_simple_kv::{Kv, SqliteBackend, key};
 
-struct MyBackend { /* your fields */ }
-
-impl KvBackend for MyBackend {
-    fn set(&mut self, key: String, value: Vec<u8>) { /* ... */ }
-    fn get(&self, key: String) -> Option<Vec<u8>> { /* ... */ }
-    fn delete(&mut self, key: String) { /* ... */ }
-    fn clear(&mut self) { /* ... */ }
-    fn get_many_iter<'a>(&'a self, keys: Vec<String>) -> Box<dyn Iterator<Item=Vec<u8>> + 'a> { /* ... */ }
-    fn keys_iter<'a>(&'a self) -> Box<dyn Iterator<Item=String> + 'a> { /* ... */ }
-}
+let mut backend = SqliteBackend::in_memory().unwrap();
+let mut kv = Kv::new(backend);
+kv.set(key!["foo"], "bar").unwrap();
 ```
 
-Then simply pass MyBackend to Kv::new!
+---
+
+### Custom Backends
+
+Just implement the `KvBackend` trait for your store. See
+`src/storages/kv_backend.rs`.
+
+---
 
 ## License
 
