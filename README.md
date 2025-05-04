@@ -2,8 +2,6 @@
 
 A dead-simple, extensible, typed, binary-sorted, key-value store for Rust.
 
----
-
 ## Features
 
 - **FoundationDB/Deno-style keys** - use the key![] macro for properly-sorted,
@@ -26,8 +24,6 @@ A dead-simple, extensible, typed, binary-sorted, key-value store for Rust.
   preferred storage.
 - **Store anything** Values are serialized to Vec&lt;u8&gt; using bincode.
 
----
-
 ## Installation
 
 ```toml
@@ -38,8 +34,6 @@ stupid-simple-kv = "0.1.0"
 [dependencies]
 stupid-simple-kv = { version = "0.1.0", features = ["sqlite"] }
 ```
-
----
 
 ## Quickstart
 
@@ -55,8 +49,6 @@ let value: Option<u32> = kv.get(&key!["answer"]).unwrap();
 assert_eq!(value, Some(42));
 kv.delete(&key!["answer"]).unwrap();
 ```
-
----
 
 ### Iteration and Filtering
 
@@ -80,8 +72,6 @@ for (key, val) in users {
 }
 ```
 
----
-
 ### Decoding a binary key (destructuring)
 
 Parse the original values out of a composite key using the built-in macro:
@@ -94,8 +84,6 @@ let (namespace, id, flag) = decode_key!((str, u64, bool), &key);
 ```
 
 You can match as many types as you support in encoding.
-
----
 
 ### Using SQLite backend (optional)
 
@@ -116,14 +104,10 @@ let mut kv = Kv::new(backend);
 kv.set(key!["foo"], "bar").unwrap();
 ```
 
----
-
 ### Custom Backends
 
 Just implement the `KvBackend` trait for your store. See
 `src/storages/kv_backend.rs`.
-
----
 
 ## License
 
