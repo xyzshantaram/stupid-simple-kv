@@ -5,3 +5,9 @@ edition = "2024"
 
 [dependencies]
 bincode = "2.0.1"
+
+rusqlite = { version = "0.31", optional = true, features = ["blob"] }
+
+[features]
+sqlite = ["rusqlite"]
+

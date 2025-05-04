@@ -4,6 +4,8 @@ pub use keys::KeyEncoder;
 pub mod storages {
     pub mod kv_backend;
     pub mod memory_backend;
+    #[cfg(feature = "sqlite")]
+    pub mod sqlite_backend;
 }
 
 pub use storages::kv_backend::{KvBackend, KvResult};
