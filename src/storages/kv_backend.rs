@@ -1,8 +1,9 @@
+/// Traits and core types for key-value backends.
 use crate::keys::Key;
 pub type KvError = Box<dyn std::error::Error + Send + Sync>;
 pub type KvResult<T> = Result<T, KvError>;
 
-/// A pluggable key-value backend trait.
+/// A pluggable key-value backend trait. See implementations for in-memory and SQLite backends.
 pub trait KvBackend {
     fn set(&mut self, key: Key, value: Vec<u8>) -> KvResult<()>;
     fn get(&self, key: &Key) -> KvResult<Option<Vec<u8>>>;

@@ -1,4 +1,5 @@
-use crate::{KvBackend, Key, IntoKey};
+/// A builder for filtered iteration over key-value pairs.
+use crate::{IntoKey, Key, KvBackend};
 use std::marker::PhantomData;
 
 pub struct KvListBuilder<'a, B: KvBackend, T> {
@@ -10,6 +11,7 @@ pub struct KvListBuilder<'a, B: KvBackend, T> {
 }
 
 impl<'a, B: KvBackend, T> KvListBuilder<'a, B, T> {
+    /// Create a new builder.
     pub fn new(backend: &'a B) -> Self {
         Self {
             backend,
@@ -19,18 +21,22 @@ impl<'a, B: KvBackend, T> KvListBuilder<'a, B, T> {
             _marker: PhantomData,
         }
     }
+    /// Set a start key.
     pub fn start<K: IntoKey>(mut self, key: K) -> Self {
         self.start = Some(key.into_key());
         self
     }
+    /// Set an end key.
     pub fn end<K: IntoKey>(mut self, key: K) -> Self {
         self.end = Some(key.into_key());
         self
     }
+    /// Set a prefix filter.
     pub fn prefix<K: IntoKey>(mut self, prefix: K) -> Self {
         self.prefix = Some(prefix.into_key());
         self
     }
+    /// Get the iterator over filtered values.
     pub fn iter(self) -> impl Iterator<Item = (Key, T)> + 'a
     where
         T: bincode::Decode<()>,

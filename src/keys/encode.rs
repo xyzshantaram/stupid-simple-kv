@@ -1,3 +1,4 @@
+/// Encoding primitives for building binary keys.
 pub trait KeyEncoder {
     fn encode_key(&self, out: &mut Vec<u8>);
 }

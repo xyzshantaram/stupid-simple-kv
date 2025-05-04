@@ -1,14 +1,16 @@
+/// Decoder for extracting typed segments from binary key representations.
 use std::str;
 
-/// Decoder for parsing binary keys (FDB/Deno-style) into primitives.
 pub struct KeyDecoder<'a> {
     rem: &'a [u8],
 }
 
 impl<'a> KeyDecoder<'a> {
+    /// Create a new decoder.
     pub fn new(rem: &'a [u8]) -> Self {
         Self { rem }
     }
+    /// Decode next segment as `str`.
     pub fn next_str(&mut self) -> Option<&'a str> {
         if self.rem.len() < 5 || self.rem[0] != 0x01 {
             return None;
@@ -21,6 +23,7 @@ impl<'a> KeyDecoder<'a> {
         self.rem = &self.rem[5 + len..];
         Some(out)
     }
+    /// Decode next segment as `u64`.
     pub fn next_u64(&mut self) -> Option<u64> {
         if self.rem.len() < 9 || self.rem[0] != 0x02 {
             return None;
@@ -29,6 +32,7 @@ impl<'a> KeyDecoder<'a> {
         self.rem = &self.rem[9..];
         Some(n)
     }
+    /// Decode next segment as `i64`.
     pub fn next_i64(&mut self) -> Option<i64> {
         if self.rem.len() < 9 || self.rem[0] != 0x03 {
             return None;
@@ -37,6 +41,7 @@ impl<'a> KeyDecoder<'a> {
         self.rem = &self.rem[9..];
         Some(n)
     }
+    /// Decode next segment as `bool`.
     pub fn next_bool(&mut self) -> Option<bool> {
         if self.rem.len() < 2 || self.rem[0] != 0x05 {
             return None;

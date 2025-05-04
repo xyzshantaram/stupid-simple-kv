@@ -1,3 +1,4 @@
+/// Traits for converting types to/from the key binary representation.
 use crate::keys::decode::KeyDecoder;
 use crate::keys::encode::KeyEncoder;
 use crate::keys::types::{DecodeError, Key};
@@ -10,7 +11,7 @@ pub trait FromKey: Sized {
     fn from_key(key: &Key) -> Result<Self, DecodeError>;
 }
 
-/// Internal: for decoding a segment from KeyDecoder (primitive/string only)
+/// For decoding a primitive segment from a KeyDecoder.
 pub trait FromKeySeg: Sized {
     fn from_decoder(dec: &mut KeyDecoder) -> Result<Self, DecodeError>;
 }

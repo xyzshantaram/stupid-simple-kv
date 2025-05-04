@@ -1,3 +1,5 @@
+//! Crate root for stupid-simple-kv: a pluggable, minimal key-value store library.
+
 pub mod keys;
 
 pub mod storages {
@@ -17,14 +19,17 @@ pub use storages::kv_backend::{KvBackend, KvResult};
 pub use storages::memory_backend::MemoryBackend;
 pub use utils::KvListBuilder;
 
+/// The main `Kv` type providing simple get/set/delete/clear/key/list operations on a pluggable backend.
 pub struct Kv<B: KvBackend> {
     backend: B,
 }
 
 impl<B: KvBackend> Kv<B> {
+    /// Create a new key-value store instance with the provided backend.
     pub fn new(backend: B) -> Self {
         Self { backend }
     }
+    /// Set a value for a key.
     pub fn set<K, T>(&mut self, key: K, value: T) -> KvResult<()>
     where
         K: IntoKey,
@@ -34,6 +39,7 @@ impl<B: KvBackend> Kv<B> {
         let bytes = bincode::encode_to_vec(value, bincode::config::standard())?;
         self.backend.set(key, bytes)
     }
+    /// Retrieve a value for a key.
     pub fn get<K, T>(&self, key: K) -> KvResult<Option<T>>
     where
         K: IntoKey,
@@ -49,6 +55,7 @@ impl<B: KvBackend> Kv<B> {
             None => Ok(None),
         }
     }
+    /// Delete a value for a key.
     pub fn delete<K>(&mut self, key: K) -> KvResult<()>
     where
         K: IntoKey,
@@ -56,12 +63,15 @@ impl<B: KvBackend> Kv<B> {
         let key = key.into_key();
         self.backend.delete(&key)
     }
+    /// Remove all data.
     pub fn clear(&mut self) -> KvResult<()> {
         self.backend.clear()
     }
+    /// Return an iterator over all keys.
     pub fn keys(&self) -> KvResult<impl Iterator<Item = Key> + '_> {
         self.backend.keys()
     }
+    /// Create a list builder for filtered/ordered iteration.
     pub fn list<T>(&self) -> KvListBuilder<B, T> {
         KvListBuilder::new(&self.backend)
     }

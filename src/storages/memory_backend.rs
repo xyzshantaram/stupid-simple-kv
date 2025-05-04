@@ -1,5 +1,6 @@
-use crate::storages::kv_backend::{KvBackend, KvResult};
+/// In-memory key-value backend using `HashMap`.
 use crate::keys::Key;
+use crate::storages::kv_backend::{KvBackend, KvResult};
 use std::collections::{HashMap, HashSet};
 
 #[derive(Default)]
@@ -27,9 +28,13 @@ impl KvBackend for MemoryBackend {
         self.map.clear();
         Ok(())
     }
-    fn get_many(&self, keys: Vec<Key>) -> KvResult<Box<dyn Iterator<Item = Vec<u8>> + Send + Sync + 'static>> {
+    fn get_many(
+        &self,
+        keys: Vec<Key>,
+    ) -> KvResult<Box<dyn Iterator<Item = Vec<u8>> + Send + Sync + 'static>> {
         let keyset: HashSet<Key> = keys.into_iter().collect();
-        let results = self.map
+        let results = self
+            .map
             .iter()
             .filter(move |(k, _)| keyset.contains(k))
             .map(|(_, v)| v.clone())

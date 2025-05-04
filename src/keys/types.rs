@@ -1,5 +1,7 @@
+/// Common types for keys and decode errors.
 use std::ops::Deref;
 
+/// Represents a binary key.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Key(pub Vec<u8>);
 
@@ -16,6 +18,7 @@ impl AsRef<[u8]> for Key {
     }
 }
 
+/// Error during decoding of keys.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum DecodeError {
     Msg(String),
