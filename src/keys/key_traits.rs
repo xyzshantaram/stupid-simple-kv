@@ -20,7 +20,7 @@ macro_rules! impl_key_traits {
     ($typ:ty, next: $next:ident, from: $to:ty) => {
         impl IntoKey for $typ {
             fn into_key(self) -> Key {
-                let mut out = Vec::new();
+                let mut out = Vec::with_capacity(256);
                 KeyEncoder::encode_key(&self, &mut out);
                 Key(out)
             }
@@ -51,7 +51,7 @@ impl_key_traits!(i64, next: next_i64, from: i64);
 
 impl IntoKey for bool {
     fn into_key(self) -> Key {
-        let mut out = Vec::new();
+        let mut out = Vec::with_capacity(256);
         KeyEncoder::encode_key(&self, &mut out);
         Key(out)
     }
@@ -70,14 +70,14 @@ impl FromKeySeg for bool {
 
 impl IntoKey for String {
     fn into_key(self) -> Key {
-        let mut out = Vec::new();
+        let mut out = Vec::with_capacity(256);
         KeyEncoder::encode_key(&self, &mut out);
         Key(out)
     }
 }
 impl IntoKey for &str {
     fn into_key(self) -> Key {
-        let mut out = Vec::new();
+        let mut out = Vec::with_capacity(256);
         KeyEncoder::encode_key(&self, &mut out);
         Key(out)
     }
@@ -108,14 +108,20 @@ impl IntoKey for &Key {
     }
 }
 
+impl KeyEncoder for &Key {
+    fn encode_key(&self, out: &mut Vec<u8>) {
+        out.extend_from_slice(&self.0);
+    }
+}
+
 macro_rules! impl_tuple_key {
     ($( $T:ident ),+) => {
-        impl<$( $T: IntoKey ),+> IntoKey for ( $( $T, )+ ) {
+        impl<$( $T: KeyEncoder ),+> IntoKey for ( $( $T, )+ ) {
             fn into_key(self) -> Key {
                 #[allow(non_snake_case)]
                 let ( $( $T, )+ ) = self;
-                let mut out = Vec::new();
-                $( out.extend($T.into_key().0); )+
+                let mut out = Vec::with_capacity(256);
+                $( $T.encode_key(&mut out); )+
                 Key(out)
             }
         }

@@ -10,3 +10,6 @@ rusqlite = { version = "0.31", optional = true, features = ["blob"] }
 
 [features]
 sqlite = ["rusqlite"]
+
+[profile.bench]
+debug = true
