@@ -129,7 +129,7 @@ macro_rules! impl_tuple_key {
         impl<$( $T: FromKeySeg ),+> FromKey for ( $( $T, )+ ) {
             fn from_key(key: &Key) -> Result<Self, DecodeError> {
                 let mut dec = KeyDecoder::new(&key.0);
-                Ok(( $( $T::from_decoder(&mut dec)? ),+ , )) // Trailing comma!
+                Ok(( $( $T::from_decoder(&mut dec)? ),+ , ))
             }
         }
     };

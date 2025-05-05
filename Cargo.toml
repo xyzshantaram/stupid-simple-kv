@@ -10,7 +10,7 @@ repository = "https://github.com/xyzshantaram/stupid-simple-kv"
 documentation = "https://docs.rs/stupid-simple-kv"
 readme = "README.md"
 keywords = ["kv", "key-value", "storage", "sqlite", "fdb"]
-categories = ["database", "caching", "data-structures", "storage"]
+categories = ["database", "caching", "data-structures"]
 
 [dependencies]
 bincode = "2.0.1"

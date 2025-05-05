@@ -9,7 +9,6 @@ mod bench_memory {
     use super::*;
     use test::{Bencher, black_box};
 
-    // Separate memory set benchmark to isolate set and get performance
     #[bench]
     fn bench_memory_set(b: &mut Bencher) {
         let keys: Vec<_> = (0..1000u64).map(|i| ("num", i).into_key()).collect();
@@ -22,14 +21,12 @@ mod bench_memory {
         });
     }
 
-    // Separate memory get benchmark
     #[bench]
     fn bench_memory_get(b: &mut Bencher) {
         let mut kv = Kv::new(MemoryBackend::new());
         let keys: Vec<_> = (0..1000u64).map(|i| ("num", i).into_key()).collect();
         let values: Vec<_> = (0..1000u64).collect();
 
-        // Preload keys to measure get-only performance
         for (k, &v) in keys.iter().zip(&values) {
             kv.set(k.clone(), v).unwrap();
         }

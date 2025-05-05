@@ -13,7 +13,6 @@ mod bench_sqlite {
     #[allow(unused_imports)]
     use test::{Bencher, black_box};
 
-    // SQLite benchmark using `iter_batched` for setup/teardown isolation
     #[cfg(feature = "sqlite")]
     #[bench]
     fn bench_sqlite_set_get(b: &mut Bencher) {
@@ -21,7 +20,6 @@ mod bench_sqlite {
         let mut kv = Kv::new(backend);
 
         b.iter(|| {
-            // Process items in batches manually
             for i in 0..1000u64 {
                 let k = ("x", i).into_key();
                 kv.set(k.clone(), black_box(i)).unwrap();
