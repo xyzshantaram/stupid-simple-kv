@@ -39,7 +39,7 @@ impl<'a, B: KvBackend, T> KvListBuilder<'a, B, T> {
     /// Get the iterator over filtered values.
     pub fn iter(self) -> impl Iterator<Item = (Key, T)> + 'a
     where
-        T: bincode::Decode<()>,
+        T: bincode::Decode<()> + serde::de::DeserializeOwned + 'static,
     {
         let mut keys: Vec<_> = self
             .backend
@@ -54,14 +54,18 @@ impl<'a, B: KvBackend, T> KvListBuilder<'a, B, T> {
             .collect();
         keys.sort();
         keys.into_iter().filter_map(move |k| {
-            self.backend
-                .get(&k)
-                .ok()
-                .flatten()
-                .and_then(|bytes| {
-                    bincode::decode_from_slice(&bytes, bincode::config::standard()).ok()
-                })
-                .map(|(v, _)| (k, v))
-        })
+    if let Ok(Some(bytes)) = self.backend.get(&k) {
+    if let Ok((val, _)) = bincode::decode_from_slice::<crate::utils::kv_value::KvValue, _>(&bytes, bincode::config::standard()) {
+        match val.to_any::<T>() {
+    Ok(user_val) => Some((k, user_val)),
+    Err(_) => None,
+}
+    } else {
+        None
+    }
+} else {
+    None
+}
+})
     }
 }

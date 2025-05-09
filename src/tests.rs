@@ -194,3 +194,26 @@ fn struct_key_roundtrip() {
     let roundtripped = AssetKey::from_key(&key).unwrap();
     assert_eq!(original, roundtripped);
 }
+
+#[test]
+fn arbitrary_struct_roundtrip() {
+    use serde::{Deserialize, Serialize};
+
+    #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
+    struct MyStruct {
+        n: i32,
+        txt: String,
+        opt: Option<f64>,
+    }
+
+    let mut kv = Kv::new(MemoryBackend::new());
+    let value = MyStruct {
+        n: 42,
+        txt: "hello".into(),
+        opt: Some(std::f64::consts::PI),
+    };
+    kv.set(("struct",), value.clone()).unwrap();
+
+    let loaded = kv.get::<_, MyStruct>(("struct",)).unwrap();
+    assert_eq!(loaded, Some(value));
+}

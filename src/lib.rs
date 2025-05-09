@@ -12,9 +12,11 @@ pub mod storages {
 pub mod utils {
     pub mod list_builder;
     pub use list_builder::KvListBuilder;
+    pub mod kv_value;
+    pub use kv_value::KvValue;
 }
 
-pub use keys::{Key, DecodeError, FromKey, IntoKey};
+pub use keys::{DecodeError, FromKey, IntoKey, Key};
 pub use storages::kv_backend::{KvBackend, KvResult};
 pub use storages::memory_backend::MemoryBackend;
 pub use utils::KvListBuilder;
@@ -33,25 +35,28 @@ impl<B: KvBackend> Kv<B> {
     pub fn set<K, T>(&mut self, key: K, value: T) -> KvResult<()>
     where
         K: IntoKey,
-        T: bincode::Encode,
+        T: serde::Serialize + 'static,
     {
+        use crate::utils::KvValue;
         let key = key.into_key();
-        let bytes = bincode::encode_to_vec(value, bincode::config::standard())?;
+        let kvv = KvValue::from_any(&value)?;
+        let bytes = bincode::encode_to_vec(kvv, bincode::config::standard())?;
         self.backend.set(key, bytes)
     }
     /// Retrieve a value for a key.
     pub fn get<K, T>(&self, key: K) -> KvResult<Option<T>>
     where
         K: IntoKey,
-        T: bincode::Decode<()>,
+        T: serde::de::DeserializeOwned + 'static,
     {
+        use crate::utils::KvValue;
         let key = key.into_key();
         match self.backend.get(&key)? {
-            Some(bytes) => Ok(
-                bincode::decode_from_slice(&bytes, bincode::config::standard())
-                    .ok()
-                    .map(|(value, _)| value),
-            ),
+            Some(bytes) => {
+                let (val, _): (KvValue, _) =
+                    bincode::decode_from_slice(&bytes, bincode::config::standard())?;
+                Ok(val.to_any()?)
+            }
             None => Ok(None),
         }
     }
