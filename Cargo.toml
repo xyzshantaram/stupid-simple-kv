@@ -21,7 +21,7 @@ serde_json = "1.0.140"
 
 [features]
 sqlite = ["rusqlite"]
-memorybackend-json = []
+mb-no-json = []
 
 [profile.bench]
 debug = true
