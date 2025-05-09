@@ -54,4 +54,7 @@ impl<'a> KeyDecoder<'a> {
         self.rem = &self.rem[2..];
         Some(b)
     }
+    pub fn remaining(&self) -> (&'a [u8], usize) {
+        (self.rem, self.rem.len())
+    }
 }
