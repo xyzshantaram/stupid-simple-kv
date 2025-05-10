@@ -11,7 +11,9 @@ mod bench_memory {
 
     #[bench]
     fn bench_memory_set(b: &mut Bencher) {
-        let keys: Vec<_> = (0..1000u64).map(|i| ("num", i).into_key()).collect();
+        let keys: Vec<_> = (0..1000u64)
+            .map(|i| (String::from("num"), i).to_key())
+            .collect();
         let values: Vec<_> = (0..1000u64).collect();
         b.iter(|| {
             for (k, &v) in keys.iter().zip(&values) {
@@ -23,17 +25,20 @@ mod bench_memory {
 
     #[bench]
     fn bench_memory_get(b: &mut Bencher) {
-        let mut kv = Kv::new(MemoryBackend::new());
-        let keys: Vec<_> = (0..1000u64).map(|i| ("num", i).into_key()).collect();
+        let mut backend = MemoryBackend::new();
+        let mut kv = Kv::new(&mut backend);
+        let keys: Vec<_> = (0..1000u64)
+            .map(|i| (String::from("num"), i).to_key())
+            .collect();
         let values: Vec<_> = (0..1000u64).collect();
 
         for (k, &v) in keys.iter().zip(&values) {
-            kv.set(k.clone(), v).unwrap();
+            kv.set(k, v.into()).unwrap();
         }
 
         b.iter(|| {
             for k in &keys {
-                let _ = kv.get::<_, u64>(k).unwrap();
+                let _ = kv.get(k).unwrap();
             }
         });
     }

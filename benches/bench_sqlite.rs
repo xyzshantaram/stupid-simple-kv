@@ -3,7 +3,7 @@
 extern crate test;
 
 #[cfg(feature = "sqlite")]
-use stupid_simple_kv::storages::sqlite_backend::SqliteBackend;
+use stupid_simple_kv::SqliteBackend;
 #[allow(unused_imports)]
 use stupid_simple_kv::{IntoKey, Kv};
 
@@ -16,14 +16,14 @@ mod bench_sqlite {
     #[cfg(feature = "sqlite")]
     #[bench]
     fn bench_sqlite_set_get(b: &mut Bencher) {
-        let backend = SqliteBackend::in_memory().unwrap();
-        let mut kv = Kv::new(backend);
+        let mut backend = SqliteBackend::in_memory().unwrap();
+        let mut kv = Kv::new(&mut backend);
 
         b.iter(|| {
             for i in 0..1000u64 {
-                let k = ("x", i).into_key();
-                kv.set(k.clone(), black_box(i)).unwrap();
-                let _ = kv.get::<_, u64>(&k).unwrap();
+                let k = (String::from("x"), i).to_key();
+                black_box(kv.set(&k, i.into())).unwrap();
+                let _ = kv.get(&k).unwrap();
             }
         });
     }

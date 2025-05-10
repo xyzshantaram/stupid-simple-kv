@@ -4,128 +4,99 @@ A dead-simple, pluggable, and binary-sorted key-value store for Rust.
 
 ## Features
 
-- **FoundationDB/Deno-style keys** – type-safe, totally order-preserving keys
-  using tuples, primitives, or your own struct, not macros.
-- **Zero-boilerplate get/set API** – use tuple, struct, or primitive as key, no
-  `.into_key()` needed!
-- **Easy decoding** – get tuples/structs back using `FromKey`.
-- **Ergonomic builder API** for filtered iteration:
-  ```rust
-  kv
-    .list::<T>()
-    .prefix(&("foo",))  // use tuple or struct
-    .start(&("foo", 0))
-    .end(&("foo", 100))
-    .iter()
-  ```
-  Yields `(Key, T)` pairs (key and value) as Rust types.
-- **In-memory backend** (`MemoryBackend`) included.
-- **Optional SQLite backend** (`SqliteBackend`) via feature flag (`sqlite`).
-- **Easy pluggable backends:** Implement the `KvBackend` trait for your store.
-- **Store anything:** Values are serialized to `Vec<u8>` using bincode.
+- **Order-preserving, binary, tuple-style keys** using primitives, tuples, or
+  your own struct if you implement IntoKey.
+- **Pluggable API** – just use Rust types for keys and values. Serialize to and
+  from serde_json values with ease. Memory and SQLite backends included, or
+  write your own.
+- **Iteration & filtering:** Builder API for range/prefix queries with typed
+  results.
+- **Custom error types** and strict Rust interface.
 
 ## Installation
 
-```toml
-[dependencies]
-stupid-simple-kv = "0.1.0"
-
-# To get the SQLite backend:
-stupid-simple-kv = { version = "0.1.0", features = ["sqlite"] }
+```sh
+cargo add stupid-simple-kv
 ```
 
 ## Quickstart
 
 ```rust
-use stupid_simple_kv::{Kv, MemoryBackend};
+use stupid_simple_kv::{Kv, MemoryBackend, KvValue};
 
 let mut backend = MemoryBackend::new();
-let mut kv = Kv::new(backend);
+let mut kv = Kv::new(&mut backend);
 
-// Store and fetch typed data
-kv.set(("answer",), 42u32).unwrap();
-let value: Option<u32> = kv.get(("answer",)).unwrap();
-assert_eq!(value, Some(42));
-kv.delete(("answer",)).unwrap();
+let key = (42u64, String::from("foo")).to_key();
+// automatically convert compatible value types to KvValue
+kv.set(&key, String::from("value").into())?;
+let out = kv.get(&key)?;
+assert_eq!(out, Some(KvValue::String("value".to_owned())));
+kv.delete(&key)?;
 ```
 
-### Iteration and Filtering
+## Iteration & Filtering
 
 ```rust
-use stupid_simple_kv::{Kv, MemoryBackend};
-
-let mut kv = Kv::new(MemoryBackend::new());
-for id in 1..=3 {
-    kv.set(("user", id), format!("user-{id}")).unwrap();
+let mut kv = Kv::new(&mut MemoryBackend::new());
+for id in 0..5 {
+  let key = (1u64, id).to_key();
+    kv.set(&key, id.into()).unwrap();
 }
 
-// Prefix filter:
-let users: Vec<_> = kv.list::<String>()
-    .prefix(&("user",)) // idiomatic filter
-    .iter()
-    .collect();
-// users: Vec<(Key, String)>
-
-for (key, val) in users {
-    println!("key: {:?}, value: {}", key, val);
-}
+// List all values with prefix (1, _)
+let results = kv.list().prefix(&(1u64,)).entries()?; // Vec<(KvKey, KvValue)>
 ```
 
-### Decoding a key into types
+## Custom Struct Keys
+
+Just implement `IntoKey` for your type:
 
 ```rust
-use stupid_simple_kv::{Key, FromKey, IntoKey};
-let key = ("foo", 42u64, true).into_key();
-let (namespace, id, flag): (String, u64, bool) = FromKey::from_key(&key).unwrap();
-// namespace == "foo", id == 42, flag == true
-```
+use stupid_simple_kv::IntoKey;
 
-### Custom struct keys
-
-```rust
-use stupid_simple_kv::{Key, IntoKey, FromKey, DecodeError};
-struct AssetKey {
-    scope: String,
-    name: String,
-    id: u32,
+struct UserKey {
+    namespace: String,
+    id: u64,
 }
-impl IntoKey for AssetKey {
-    fn into_key(self) -> Key {
-        (self.scope, self.name, self.id).into_key()
-    }
-}
-impl FromKey for AssetKey {
-    fn from_key(key: &Key) -> Result<Self, DecodeError> {
-        let (scope, name, id): (String, String, u32) = FromKey::from_key(key)?;
-        Ok(Self { scope, name, id })
+impl IntoKey for UserKey {
+    fn to_key(&self) -> stupid_simple_kv::KvKey {
+        (&self.namespace, self.id).to_key()
     }
 }
 ```
 
-### Using SQLite backend (optional)
+## SQLite backend
 
-Enable the feature:
-
-```toml
-[dependencies]
-stupid-simple-kv = { version = "0.2.0", features = ["sqlite"] }
-```
-
-Use in your code:
+_Note: You can choose to not use the SQLite backend by disabling the `sqlite`
+feature._
 
 ```rust
-use stupid_simple_kv::{Kv, storages::sqlite_backend::SqliteBackend};
+use stupid_simple_kv::{Kv, SqliteBackend};
 
-let mut backend = SqliteBackend::in_memory().unwrap();
-let mut kv = Kv::new(backend);
-kv.set(("foo",), "bar").unwrap();
+let mut backend = SqliteBackend::in_memory()?;
+let mut kv = Kv::new(&mut backend);
+let key = ("foo",);
+kv.set(&key, String::from("bar").into())?;
 ```
 
-### Custom Backends
+## JSON Import/Export
 
-Just implement the `KvBackend` trait for your store. See
-`src/storages/kv_backend.rs`.
+- Easily **dump the entire key-value store to JSON** (human/debug-friendly) with
+  `kv.dump_json()`.
+- **Restore or initialize from JSON** using `Kv::from_json_string(...)`.
+- All keys are dumped as parseable debug strings; values use a type-preserving
+  JSON format.
+
+**Example:**
+
+```rust
+let json = kv.dump_json()?;
+// ...
+let mut kv2 = Kv::from_json_string(&mut backend, json)?;
+
 
 ## License
 
 MIT License © 2025 Siddharth S Singh (me@shantaram.xyz)
+```
