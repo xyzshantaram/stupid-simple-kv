@@ -103,8 +103,8 @@ mod tests {
 
     #[test]
     fn sqlite_set_and_get() -> KvResult<()> {
-        let mut backend = SqliteBackend::in_memory()?;
-        let mut kv = Kv::new(&mut backend);
+        let backend = Box::new(SqliteBackend::in_memory()?);
+        let mut kv = Kv::new(backend);
         let tup = (String::from("hello"),);
         let value = KvValue::String("world".to_string());
 
@@ -116,8 +116,8 @@ mod tests {
 
     #[test]
     fn sqlite_kv_set_get_delete() -> KvResult<()> {
-        let mut backend = SqliteBackend::in_memory()?;
-        let mut kv = Kv::new(&mut backend);
+        let backend = Box::new(SqliteBackend::in_memory()?);
+        let mut kv = Kv::new(backend);
         let tup = (String::from("num"),);
         let value = KvValue::U64(42);
 
@@ -130,8 +130,8 @@ mod tests {
 
     #[test]
     fn sqlite_prefix_iter() -> KvResult<()> {
-        let mut backend = SqliteBackend::in_memory()?;
-        let mut kv = Kv::new(&mut backend);
+        let backend = Box::new(SqliteBackend::in_memory()?);
+        let mut kv = Kv::new(backend);
         for i in 0..5u8 {
             let key = (String::from("users"), i as u64);
             kv.set(&key, KvValue::U64(i as u64))?;

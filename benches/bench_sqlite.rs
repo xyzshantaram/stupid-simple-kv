@@ -10,14 +10,15 @@ use stupid_simple_kv::{IntoKey, Kv};
 #[cfg(test)]
 mod bench_sqlite {
     use super::*;
+    use stupid_simple_kv::KvResult;
     #[allow(unused_imports)]
     use test::{Bencher, black_box};
 
     #[cfg(feature = "sqlite")]
     #[bench]
-    fn bench_sqlite_set_get(b: &mut Bencher) {
-        let mut backend = SqliteBackend::in_memory().unwrap();
-        let mut kv = Kv::new(&mut backend);
+    fn bench_sqlite_set_get(b: &mut Bencher) -> KvResult<()> {
+        let backend = Box::new(SqliteBackend::in_memory()?);
+        let mut kv = Kv::new(backend);
 
         b.iter(|| {
             for i in 0..1000u64 {
@@ -26,5 +27,6 @@ mod bench_sqlite {
                 let _ = kv.get(&k).unwrap();
             }
         });
+        Ok(())
     }
 }

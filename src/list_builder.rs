@@ -1,14 +1,14 @@
 use crate::{IntoKey, KvBackend, KvKey, KvResult, KvValue};
 
 pub struct KvListBuilder<'a> {
-    pub(crate) backend: &'a mut dyn KvBackend,
+    pub(crate) backend: &'a mut Box<dyn KvBackend>,
     pub(crate) prefix: Option<&'a dyn IntoKey>,
     pub(crate) start: Option<&'a dyn IntoKey>,
     pub(crate) end: Option<&'a dyn IntoKey>,
 }
 
 impl<'a> KvListBuilder<'a> {
-    pub(crate) fn new(backend: &'a mut dyn KvBackend) -> Self {
+    pub(crate) fn new(backend: &'a mut Box<dyn KvBackend>) -> Self {
         Self {
             backend,
             prefix: None,

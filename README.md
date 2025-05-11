@@ -27,9 +27,9 @@ use stupid_simple_kv::{Kv, MemoryBackend, KvValue};
 let mut backend = MemoryBackend::new();
 let mut kv = Kv::new(&mut backend);
 
-let key = (42u64, String::from("foo")).to_key();
+let key = (42u64, "foo").to_key();
 // automatically convert compatible value types to KvValue
-kv.set(&key, String::from("value").into())?;
+kv.set(&key, "value".into())?;
 let out = kv.get(&key)?;
 assert_eq!(out, Some(KvValue::String("value".to_owned())));
 kv.delete(&key)?;
@@ -77,7 +77,7 @@ use stupid_simple_kv::{Kv, SqliteBackend};
 let mut backend = SqliteBackend::in_memory()?;
 let mut kv = Kv::new(&mut backend);
 let key = ("foo",);
-kv.set(&key, String::from("bar").into())?;
+kv.set(&key, "bar".into())?;
 ```
 
 ## JSON Import/Export
