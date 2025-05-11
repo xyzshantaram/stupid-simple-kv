@@ -70,6 +70,14 @@ impl IntoKey for bool {
     }
 }
 
+impl IntoKey for &str {
+    fn to_key(&self) -> KvKey {
+        let mut key = KvKey::new();
+        key.push(self);
+        key
+    }
+}
+
 impl IntoKey for KvKey {
     fn to_key(&self) -> KvKey {
         self.clone()
@@ -106,19 +114,19 @@ mod tests {
 
     #[test]
     fn roundtrip_longer_tuple() -> KvResult<()> {
-        let tup = (19u64, -5i64, String::from("foo"), true, false);
+        let tup = (19u64, -5i64, "foo", true, false);
         let key = tup.clone().to_key();
         let out: (u64, i64, String, bool, bool) = key.try_into()?;
-        assert_eq!(tup, out);
+        assert_eq!((tup.0, tup.1, tup.2.to_owned(), tup.3, tup.4), out);
         Ok(())
     }
 
     #[test]
     fn roundtrip_tuple_tryfrom() -> KvResult<()> {
-        let tup = (7u64, String::from("hello world"), true);
+        let tup = (7u64, "hello world", true);
         let key = tup.clone().to_key();
         let out: (u64, String, bool) = key.try_into()?;
-        assert_eq!(tup, out);
+        assert_eq!((tup.0, tup.1.to_owned(), tup.2), out);
         Ok(())
     }
 
@@ -134,7 +142,7 @@ mod tests {
 
     #[test]
     fn decode_error_wrong_length() -> KvResult<()> {
-        let tup = (55u64, String::from("xyz"));
+        let tup = (55u64, "xyz");
         let key = tup.to_key();
         // Attempt to decode as a 3-tuple (should fail)
         let out: KvResult<(u64, String, bool)> = key.try_into();
@@ -144,19 +152,19 @@ mod tests {
 
     #[test]
     fn roundtrip_with_strings() -> KvResult<()> {
-        let tup = (999u64, String::from(""), String::from("apple"), true);
+        let tup = (999u64, "potato", "apple", true);
         let key = tup.clone().to_key();
         let out: (u64, String, String, bool) = key.try_into()?;
-        assert_eq!(tup, out);
+        assert_eq!((tup.0, tup.1.to_owned(), tup.2.to_owned(), tup.3), out);
         Ok(())
     }
 
     #[test]
     fn roundtrip_false_bool() -> KvResult<()> {
-        let tup = (0u64, false, String::from("z"));
+        let tup = (0u64, false, "z");
         let key = tup.clone().to_key();
         let out: (u64, bool, String) = key.try_into()?;
-        assert_eq!(tup, out);
+        assert_eq!((tup.0, tup.1, tup.2.to_owned()), out);
         Ok(())
     }
 }

@@ -14,7 +14,7 @@ mod bench_keys {
         let items: Vec<_> = (0..10000u64).collect();
         b.iter(|| {
             for &i in &items {
-                black_box((String::from("foo"), i, String::from("bar"), true).to_key());
+                black_box(("foo", i, "bar", true).to_key());
             }
         });
     }

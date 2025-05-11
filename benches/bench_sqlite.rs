@@ -21,7 +21,7 @@ mod bench_sqlite {
 
         b.iter(|| {
             for i in 0..1000u64 {
-                let k = (String::from("x"), i).to_key();
+                let k = ("sqlite-key", i).to_key();
                 black_box(kv.set(&k, i.into())).unwrap();
                 let _ = kv.get(&k).unwrap();
             }

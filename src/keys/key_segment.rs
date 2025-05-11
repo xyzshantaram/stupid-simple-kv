@@ -46,6 +46,16 @@ impl KeySegment for String {
     }
 }
 
+impl KeySegment for &str {
+    fn to_bytes(&self) -> Vec<u8> {
+        let mut out = Vec::with_capacity(1 + 8 + self.len());
+        out.push(KeySegmentTag::String as u8);
+        out.extend_from_slice(&(self.len() as u64).to_be_bytes());
+        out.extend_from_slice(self.as_bytes());
+        out
+    }
+}
+
 macro_rules! impl_key_encode_for_tuple {
     ($($name:ident),+) => {
         impl<$($name: KeySegment),+> IntoKey for ($($name,)+) {
