@@ -1,6 +1,9 @@
 use serde_json::{Map as JsonMap, Number, Value as JsonValue};
 use std::collections::BTreeMap;
 
+/// Any type which can be stored as a value in the key-value store.
+///
+/// Supports null, bool, i64, u64, f64, String, arrays, objects, and binary blobs.
 #[derive(Debug, Clone, PartialEq, PartialOrd, bincode::Encode, bincode::Decode)]
 pub enum KvValue {
     Null,
