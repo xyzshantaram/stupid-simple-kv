@@ -6,9 +6,10 @@ A dead-simple, pluggable, and binary-sorted key-value store for Rust.
 
 - **Order-preserving, binary, tuple-style keys** using primitives, tuples, or
   your own struct if you implement IntoKey.
-- **Pluggable API** – just use Rust types for keys and values. Memory and SQLite backends included, or
-  write your own.
-- **Generic value serialization:** Store any serde-serializable Rust value as a `KvValue` using serde_json.
+- **Pluggable API** – just use Rust types for keys and values. Memory and SQLite
+  backends included, or write your own.
+- **Generic value serialization:** Store any serde-serializable Rust value as a
+  `KvValue` using serde_json.
 - **Iteration & filtering:** Builder API for range/prefix queries with typed
   results.
 - **Custom error types** and strict Rust interface.
@@ -31,7 +32,7 @@ let key = (42u64, "foo").to_key();
 // automatically convert compatible value types to KvValue
 kv.set(&key, "value".into())?;
 let out = kv.get(&key)?;
-assert_eq!(out, Some(KvValue::String("value".to_owned())));
+assert_eq!(out, Some(String::from("value").into()));
 kv.delete(&key)?;
 ```
 
@@ -42,7 +43,7 @@ let backend = Box::new(MemoryBackend::new());
 let mut kv = Kv::new(backend);
 for id in 0..5 {
   let key = (1u64, id).to_key();
-  kv.set(&key, id.into()).unwrap();
+  kv.set(&key, id.into())?;
 }
 
 // List all values with prefix (1, _)
@@ -94,7 +95,8 @@ kv.set(&key, "bar".into())?;
 ```rust
 let json = kv.dump_json()?;
 // ...
-let mut kv2 = Kv::from_json_string(&mut backend, json)?;
+let backend = Box::new(MemoryBackend::new());
+let mut loaded = Kv::from_json_string(backend, json)?;
 ```
 
 ## License
