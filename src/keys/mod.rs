@@ -7,12 +7,18 @@ mod key_segment;
 #[derive(Clone, PartialEq, PartialOrd, Eq, Ord, Debug)]
 pub struct KvKey(pub(crate) Vec<u8>);
 
+impl Default for KvKey {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl KvKey {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self(Vec::with_capacity(128))
     }
 
-    fn push(&mut self, part: &dyn KeySegment) {
+    pub fn push(&mut self, part: &dyn KeySegment) {
         part.encode_into(&mut self.0);
     }
 
