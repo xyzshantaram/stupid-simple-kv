@@ -121,7 +121,7 @@ mod tests {
         let backend = Box::new(SqliteBackend::in_memory()?);
         let mut kv = Kv::new(backend);
         let tup = (String::from("num"),);
-        let value = KvValue::U64(42);
+        let value = KvValue::I64(42);
 
         kv.set(&tup, value.clone())?;
         assert_eq!(kv.get(&tup)?, Some(value.clone()));
@@ -134,14 +134,14 @@ mod tests {
     fn sqlite_prefix_iter() -> KvResult<()> {
         let backend = Box::new(SqliteBackend::in_memory()?);
         let mut kv = Kv::new(backend);
-        for i in 0..5u8 {
-            let key = (String::from("users"), i as u64);
-            kv.set(&key, KvValue::U64(i as u64))?;
+        for i in 0..5i64 {
+            let key = (String::from("users"), i);
+            kv.set(&key, KvValue::I64(i))?;
         }
         let results = kv.list().prefix(&(String::from("users"),)).entries()?;
         assert_eq!(results.len(), 5);
         let vals: Vec<_> = results.into_iter().map(|(_, v)| v).collect();
-        assert!(vals.contains(&KvValue::U64(2)));
+        assert!(vals.contains(&KvValue::I64(2)));
         Ok(())
     }
 }

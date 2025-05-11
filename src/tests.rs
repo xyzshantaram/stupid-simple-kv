@@ -51,11 +51,11 @@ mod kv_integration_tests {
         let mut kv = Kv::new(backend);
 
         let tup = (17u64, "a".to_string());
-        kv.set(&tup, KvValue::U64(123))?;
-        kv.set(&tup, KvValue::U64(456))?;
+        kv.set(&tup, KvValue::I64(123))?;
+        kv.set(&tup, KvValue::I64(456))?;
 
         let out = kv.get(&tup)?;
-        assert_eq!(out, Some(KvValue::U64(456)));
+        assert_eq!(out, Some(KvValue::I64(456)));
         Ok(())
     }
 
@@ -64,20 +64,20 @@ mod kv_integration_tests {
         let backend = Box::new(MemoryBackend::new());
         let mut kv = Kv::new(backend);
 
-        for i in 0..10u64 {
+        for i in 0..10i64 {
             let tup = (1u64, i);
-            kv.set(&tup, KvValue::U64(i))?;
+            kv.set(&tup, KvValue::I64(i))?;
         }
-        for j in 0..10u64 {
+        for j in 0..10i64 {
             let tup = (2u64, j);
-            kv.set(&tup, KvValue::U64(j))?;
+            kv.set(&tup, KvValue::I64(j))?;
         }
         // List all keys starting with (1, _)
         let results = kv.list().prefix(&(1u64,)).entries()?;
         assert_eq!(results.len(), 10);
         for (k, v) in results {
-            let (_prefix, idx): (u64, u64) = k.try_into()?;
-            assert_eq!(v, KvValue::U64(idx));
+            let (_prefix, idx): (u64, i64) = k.try_into()?;
+            assert_eq!(v, KvValue::I64(idx));
         }
         Ok(())
     }
@@ -87,21 +87,21 @@ mod kv_integration_tests {
         let backend = Box::new(MemoryBackend::new());
         let mut kv = Kv::new(backend);
 
-        for i in 1..=5u64 {
+        for i in 1..=5i64 {
             let tup = (99u64, i);
-            kv.set(&tup, KvValue::U64(i * 10))?;
+            kv.set(&tup, KvValue::I64(i * 10))?;
         }
         // List from (99,2) up to but not including (99,5)
         let results = kv
             .list()
-            .start(&(99u64, 2u64))
-            .end(&(99u64, 5u64))
+            .start(&(99u64, 2i64))
+            .end(&(99u64, 5i64))
             .entries()?;
 
         let want = vec![20, 30, 40];
-        let got: Vec<u64> = results
+        let got: Vec<i64> = results
             .into_iter()
-            .map(|(_k, v)| if let KvValue::U64(n) = v { n } else { 0 })
+            .map(|(_k, v)| if let KvValue::I64(n) = v { n } else { 0 })
             .collect();
 
         assert_eq!(got, want);
@@ -113,9 +113,9 @@ mod kv_integration_tests {
         let backend = Box::new(MemoryBackend::new());
         let mut kv = Kv::new(backend);
 
-        for i in 0..5u64 {
+        for i in 0..5i64 {
             let tup = (777u64, i);
-            kv.set(&tup, KvValue::U64(i))?;
+            kv.set(&tup, KvValue::I64(i))?;
         }
         kv.backend.clear()?;
         let items = kv.entries()?;

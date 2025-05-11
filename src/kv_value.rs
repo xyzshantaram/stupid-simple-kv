@@ -5,13 +5,12 @@ use crate::KvError;
 
 /// Any type which can be stored as a value in the key-value store.
 ///
-/// Supports null, bool, i64, u64, f64, String, arrays, objects, and binary blobs.
+/// Supports null, bool, i64, f64, String, arrays, objects, and binary blobs.
 #[derive(Debug, Clone, PartialEq, PartialOrd, bincode::Encode, bincode::Decode)]
 pub enum KvValue {
     Null,
     Bool(bool),
     I64(i64),
-    U64(u64),
     F64(f64),
     String(String),
     Array(Vec<KvValue>),
@@ -34,12 +33,6 @@ impl From<bool> for KvValue {
 impl From<i64> for KvValue {
     fn from(value: i64) -> Self {
         KvValue::I64(value)
-    }
-}
-
-impl From<u64> for KvValue {
-    fn from(value: u64) -> Self {
-        KvValue::U64(value)
     }
 }
 
@@ -87,8 +80,6 @@ impl From<&JsonValue> for KvValue {
             JsonValue::Number(n) => {
                 if let Some(i) = n.as_i64() {
                     KvValue::I64(i)
-                } else if let Some(u) = n.as_u64() {
-                    KvValue::U64(u)
                 } else if let Some(f) = n.as_f64() {
                     KvValue::F64(f)
                 } else {
@@ -140,7 +131,6 @@ impl From<&KvValue> for JsonValue {
             KvValue::Null => JsonValue::Null,
             KvValue::Bool(b) => JsonValue::Bool(*b),
             KvValue::I64(n) => JsonValue::Number(Number::from(*n)),
-            KvValue::U64(n) => JsonValue::Number(Number::from(*n)),
             KvValue::F64(f) => Number::from_f64(*f)
                 .map(JsonValue::Number)
                 .unwrap_or(JsonValue::Null),
@@ -205,19 +195,6 @@ impl TryFrom<KvValue> for i64 {
             KvValue::I64(n) => Ok(n),
             _ => Err(KvError::ValDowncastError(format!(
                 "Expected I64, got {value:?}"
-            ))),
-        }
-    }
-}
-
-impl TryFrom<KvValue> for u64 {
-    type Error = KvError;
-
-    fn try_from(value: KvValue) -> Result<Self, Self::Error> {
-        match value {
-            KvValue::U64(n) => Ok(n),
-            _ => Err(KvError::ValDowncastError(format!(
-                "Expected U64, got {value:?}"
             ))),
         }
     }

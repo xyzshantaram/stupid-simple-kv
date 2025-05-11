@@ -21,7 +21,7 @@ mod bench_sqlite {
         let mut kv = Kv::new(backend);
 
         b.iter(|| {
-            for i in 0..1000u64 {
+            for i in 0..1000i64 {
                 let k = ("sqlite-key", i).to_key();
                 black_box(kv.set(&k, i.into())).unwrap();
                 let _ = kv.get(&k).unwrap();

@@ -26,7 +26,7 @@ mod bench_memory {
         let backend = Box::new(MemoryBackend::new());
         let mut kv = Kv::new(backend);
         let keys: Vec<_> = (0..1000u64).map(|i| ("num", i).to_key()).collect();
-        let values: Vec<_> = (0..1000u64).collect();
+        let values: Vec<_> = (0..1000i64).collect();
 
         for (k, &v) in keys.iter().zip(&values) {
             kv.set(k, v.into()).unwrap();
