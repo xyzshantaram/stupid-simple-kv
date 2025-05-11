@@ -12,7 +12,7 @@ impl KvKey {
     }
 
     fn push(&mut self, part: &dyn KeySegment) {
-        self.0.extend_from_slice(&part.to_bytes());
+        part.encode_into(&mut self.0);
     }
 
     pub fn starts_with(&self, key: &KvKey) -> bool {

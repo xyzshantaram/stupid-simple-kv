@@ -9,50 +9,43 @@ pub(crate) enum KeySegmentTag {
 }
 
 pub trait KeySegment {
-    fn to_bytes(&self) -> Vec<u8>;
+    fn encode_into(&self, out: &mut Vec<u8>);
 }
 
 impl KeySegment for u64 {
-    fn to_bytes(&self) -> Vec<u8> {
-        let mut out = Vec::with_capacity(1 + 8);
+    fn encode_into(&self, out: &mut Vec<u8>) {
         out.push(KeySegmentTag::U64 as u8);
         out.extend_from_slice(&self.to_be_bytes());
-        out
     }
 }
 
 impl KeySegment for i64 {
-    fn to_bytes(&self) -> Vec<u8> {
-        let mut out = Vec::with_capacity(1 + 8);
+    fn encode_into(&self, out: &mut Vec<u8>) {
         out.push(KeySegmentTag::I64 as u8);
         out.extend_from_slice(&self.to_be_bytes());
-        out
     }
 }
 
 impl KeySegment for bool {
-    fn to_bytes(&self) -> Vec<u8> {
-        vec![KeySegmentTag::Bool as u8, *self as u8]
+    fn encode_into(&self, out: &mut Vec<u8>) {
+        out.push(KeySegmentTag::Bool as u8);
+        out.push(*self as u8);
     }
 }
 
 impl KeySegment for String {
-    fn to_bytes(&self) -> Vec<u8> {
-        let mut out = Vec::with_capacity(1 + 8 + 128);
+    fn encode_into(&self, out: &mut Vec<u8>) {
         out.push(KeySegmentTag::String as u8);
-        out.extend_from_slice(&self.len().to_be_bytes());
+        out.extend_from_slice(&(self.len() as u64).to_be_bytes());
         out.extend_from_slice(self.as_bytes());
-        out
     }
 }
 
 impl KeySegment for &str {
-    fn to_bytes(&self) -> Vec<u8> {
-        let mut out = Vec::with_capacity(1 + 8 + self.len());
+    fn encode_into(&self, out: &mut Vec<u8>) {
         out.push(KeySegmentTag::String as u8);
         out.extend_from_slice(&(self.len() as u64).to_be_bytes());
         out.extend_from_slice(self.as_bytes());
-        out
     }
 }
 
