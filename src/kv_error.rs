@@ -6,6 +6,7 @@ pub enum KvError {
     InvalidSelector,
     ValEncodeError(bincode::error::EncodeError),
     ValDecodeError(bincode::error::DecodeError),
+    ValDowncastError(String),
     Other(String),
     #[cfg(feature = "sqlite")]
     SqliteError(rusqlite::Error),
@@ -29,6 +30,7 @@ impl std::fmt::Display for KvError {
             }
             KvError::Other(str) => write!(f, "Error during kv op: {str}"),
             KvError::SqliteError(error) => write!(f, "rusqlite error: {error}"),
+            KvError::ValDowncastError(s) => write!(f, "Error converting to KvValue: {s}"),
         }
     }
 }

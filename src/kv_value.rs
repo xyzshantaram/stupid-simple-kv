@@ -1,6 +1,8 @@
 use serde_json::{Map as JsonMap, Number, Value as JsonValue};
 use std::collections::BTreeMap;
 
+use crate::KvError;
+
 /// Any type which can be stored as a value in the key-value store.
 ///
 /// Supports null, bool, i64, u64, f64, String, arrays, objects, and binary blobs.
@@ -165,6 +167,110 @@ impl From<&KvValue> for JsonValue {
                 );
                 JsonValue::Object(map)
             }
+        }
+    }
+}
+
+impl TryFrom<KvValue> for () {
+    type Error = KvError;
+
+    fn try_from(value: KvValue) -> Result<Self, Self::Error> {
+        match value {
+            KvValue::Null => Ok(()),
+            _ => Err(KvError::ValDowncastError(format!(
+                "Expected Null, got {value:?}"
+            ))),
+        }
+    }
+}
+
+impl TryFrom<KvValue> for bool {
+    type Error = KvError;
+
+    fn try_from(value: KvValue) -> Result<Self, Self::Error> {
+        match value {
+            KvValue::Bool(b) => Ok(b),
+            _ => Err(KvError::ValDowncastError(format!(
+                "Expected Bool, got {value:?}"
+            ))),
+        }
+    }
+}
+
+impl TryFrom<KvValue> for i64 {
+    type Error = KvError;
+
+    fn try_from(value: KvValue) -> Result<Self, Self::Error> {
+        match value {
+            KvValue::I64(n) => Ok(n),
+            _ => Err(KvError::ValDowncastError(format!(
+                "Expected I64, got {value:?}"
+            ))),
+        }
+    }
+}
+
+impl TryFrom<KvValue> for u64 {
+    type Error = KvError;
+
+    fn try_from(value: KvValue) -> Result<Self, Self::Error> {
+        match value {
+            KvValue::U64(n) => Ok(n),
+            _ => Err(KvError::ValDowncastError(format!(
+                "Expected U64, got {value:?}"
+            ))),
+        }
+    }
+}
+
+impl TryFrom<KvValue> for f64 {
+    type Error = KvError;
+
+    fn try_from(value: KvValue) -> Result<Self, Self::Error> {
+        match value {
+            KvValue::F64(n) => Ok(n),
+            _ => Err(KvError::ValDowncastError(format!(
+                "Expected F64, got {value:?}"
+            ))),
+        }
+    }
+}
+
+impl TryFrom<KvValue> for String {
+    type Error = KvError;
+
+    fn try_from(value: KvValue) -> Result<Self, Self::Error> {
+        match value {
+            KvValue::String(s) => Ok(s),
+            _ => Err(KvError::ValDowncastError(format!(
+                "Expected String, got {value:?}"
+            ))),
+        }
+    }
+}
+
+impl TryFrom<KvValue> for Vec<KvValue> {
+    type Error = KvError;
+
+    fn try_from(value: KvValue) -> Result<Self, Self::Error> {
+        match value {
+            KvValue::Array(arr) => Ok(arr),
+            _ => Err(KvError::ValDowncastError(format!(
+                "Expected Array, got {value:?}"
+            ))),
+        }
+    }
+}
+
+impl TryFrom<KvValue> for Vec<u8> {
+    type Error = KvError;
+
+    fn try_from(value: KvValue) -> Result<Self, Self::Error> {
+        match value {
+            KvValue::Binary(bytes) => Ok(bytes),
+            _ => Err(KvError::ValDowncastError(format!(
+                "Expected Binary, got {value:?}"
+            ))),
         }
     }
 }
