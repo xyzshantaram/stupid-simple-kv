@@ -1,6 +1,6 @@
 [package]
 name = "stupid-simple-kv"
-version = "0.2.2"
+version = "0.2.3"
 edition = "2024"
 description = "A dead-simple, pluggable, binary-sorted key-value store for Rust with FoundationDB-style keys. In-memory and SQLite backends. Zero-boilerplate and easy iteration."
 license = "MIT OR Apache-2.0"
@@ -14,7 +14,7 @@ categories = ["database", "caching", "data-structures"]
 
 [dependencies]
 bincode = "2.0.1"
-rusqlite = { version = "0.31", optional = true, features = ["blob"] }
+rusqlite = { version = "0.35", optional = true, features = ["blob"] }
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.140"
 

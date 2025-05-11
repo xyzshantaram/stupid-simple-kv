@@ -45,11 +45,7 @@ pub fn to_display_string(mut rem: &[u8]) -> Option<String> {
             }
             let bytes: [u8; 8] = rem[1..9].try_into().ok()?;
             let n = i64::from_be_bytes(bytes);
-            if n >= 0 {
-                parts.push(format!("{n}i"));
-            } else {
-                parts.push(format!("-{}", -n));
-            }
+            parts.push(format!("{n}i"));
             rem = &rem[9..];
         } else if rem[0] == KeySegmentTag::U64 as u8 {
             if rem.len() < 9 {
@@ -57,7 +53,7 @@ pub fn to_display_string(mut rem: &[u8]) -> Option<String> {
             }
             let bytes: [u8; 8] = rem[1..9].try_into().ok()?;
             let n = u64::from_be_bytes(bytes);
-            parts.push(n.to_string());
+            parts.push(format!("{n}u"));
             rem = &rem[9..];
         } else {
             // Unknown tag - bail out
@@ -98,28 +94,18 @@ pub fn parse_display_string_to_key(display: &str) -> Option<KvKey> {
             key.push(&false);
             continue;
         }
-        // i64 negative: -digits (no trailing i)
-        if let Some(rest) = part.strip_prefix('-') {
-            if rest.chars().all(|c| c.is_ascii_digit()) {
-                if let Ok(num) = i64::from_str(&format!("-{rest}")) {
-                    key.push(&num);
-                    continue;
-                }
-            }
-        }
-        // i64 positive: digits + 'i'
+        // i64: digits (possibly negative) + 'i'
         if part.ends_with('i') && part.len() > 1 {
             let digits = &part[..part.len() - 1];
-            if digits.chars().all(|c| c.is_ascii_digit()) {
-                if let Ok(num) = i64::from_str(digits) {
-                    key.push(&num);
-                    continue;
-                }
+            if let Ok(num) = i64::from_str(digits) {
+                key.push(&num);
+                continue;
             }
         }
-        // u64: only digits
-        if part.chars().all(|c| c.is_ascii_digit()) {
-            if let Ok(num) = u64::from_str(&part) {
+        // u64: digits + 'u'
+        if part.ends_with('u') && part.len() > 1 {
+            let digits = &part[..part.len() - 1];
+            if let Ok(num) = u64::from_str(digits) {
                 key.push(&num);
                 continue;
             }

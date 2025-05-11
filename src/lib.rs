@@ -9,7 +9,7 @@
 //! - **Automatic value serialization**: Store any serde-serializable value as a [`KvValue`].
 //! - **List/query API**: Filter or range-scan with [`KvListBuilder`].
 //! - **Easy JSON import/export**: Dump or restore the store's contents for debugging or migration.
-//! - **Typed errors** and strict Rust interface. 
+//! - **Typed errors** and strict Rust interface.
 //!
 //! ## Quickstart
 //!
@@ -28,6 +28,7 @@
 //! ## Listing and Filtering
 //!
 //! ```rust
+//! use stupid_simple_kv::{Kv, MemoryBackend, KvValue, IntoKey};
 //! let backend = Box::new(MemoryBackend::new());
 //! let mut kv = Kv::new(backend);
 //! for i in 0..5 as i64 {
@@ -51,6 +52,8 @@
 //! ## JSON Import/Export
 //!
 //! ```rust
+//! use stupid_simple_kv::{Kv, MemoryBackend, KvValue, IntoKey};
+//! let mut kv = Kv::new(Box::new(MemoryBackend::new()));
 //! let json = kv.dump_json().unwrap();
 //! let mut loaded = Kv::from_json_string(Box::new(MemoryBackend::new()), json).unwrap();
 //! ```
@@ -99,6 +102,7 @@ impl<'a> Kv<'a> {
     ///
     /// Example:
     /// ```rust
+    /// use stupid_simple_kv::{Kv, MemoryBackend, KvValue, IntoKey};
     /// let mut kv = Kv::new(Box::new(MemoryBackend::new()));
     /// ```
     pub fn new(backend: Box<dyn KvBackend>) -> Self {
@@ -112,6 +116,8 @@ impl<'a> Kv<'a> {
     ///
     /// Example:
     /// ```rust
+    /// use stupid_simple_kv::{Kv, MemoryBackend, KvValue, IntoKey};
+    /// let mut kv = Kv::new(Box::new(MemoryBackend::new()));
     /// let val = kv.get(&(42u64, "x")).unwrap();
     /// ```
     pub fn get(&self, key: &dyn IntoKey) -> KvResult<Option<KvValue>> {
@@ -131,7 +137,9 @@ impl<'a> Kv<'a> {
     ///
     /// Example:
     /// ```rust
-    /// kv.set(&(7u64, true, "foo"), 123.into()).unwrap();
+    /// use stupid_simple_kv::{Kv, MemoryBackend, KvValue, IntoKey};
+    /// let mut kv = Kv::new(Box::new(MemoryBackend::new()));
+    /// kv.set(&(7u64, true, "foo"), 123i64.into()).unwrap();
     /// ```
     pub fn set(&mut self, key: &dyn IntoKey, value: KvValue) -> KvResult<()> {
         self.set_optional(key, Some(value))
@@ -157,6 +165,8 @@ impl<'a> Kv<'a> {
     ///
     /// Example:
     /// ```rust
+    /// use stupid_simple_kv::{Kv, MemoryBackend, IntoKey};
+    /// let mut kv = Kv::new(Box::new(MemoryBackend::new()));
     /// let maybe_pair = kv.delete(&(3u64, false));
     /// ```
     pub fn delete(&mut self, key: &dyn IntoKey) -> KvResult<Option<(KvKey, KvValue)>> {
@@ -175,11 +185,13 @@ impl<'a> Kv<'a> {
     ///
     /// Example:
     /// ```rust
+    /// use stupid_simple_kv::{Kv, MemoryBackend, KvValue, IntoKey};
+    /// let mut kv = Kv::new(Box::new(MemoryBackend::new()));
     /// let all = kv.entries().unwrap();
     /// ```
     pub fn entries(&mut self) -> KvResult<Vec<(KvKey, KvValue)>> {
         KvListBuilder {
-            backend: &mut self.backend,
+            backend: &*self.backend,
             start: None,
             end: None,
             prefix: None,
@@ -192,11 +204,13 @@ impl<'a> Kv<'a> {
     ///
     /// Example:
     /// ```rust
+    /// use stupid_simple_kv::{Kv, MemoryBackend, KvValue, IntoKey};
+    /// let mut kv = Kv::new(Box::new(MemoryBackend::new()));
     /// // List all keys starting with (1, _)
     /// let results = kv.list().prefix(&(1u64,)).entries().unwrap();
     /// ```
-    pub fn list(&'a mut self) -> KvListBuilder<'a> {
-        KvListBuilder::new(&mut self.backend)
+    pub fn list(&'a self) -> KvListBuilder<'a> {
+        KvListBuilder::new(&*self.backend)
     }
 
     /// Dump all keys and values as a pretty, parseable JSON value.
@@ -242,6 +256,8 @@ impl<'a> Kv<'a> {
     ///
     /// Example:
     /// ```rust
+    /// use stupid_simple_kv::{Kv, MemoryBackend, KvValue, IntoKey};
+    /// let mut kv = Kv::new(Box::new(MemoryBackend::new()));
     /// let json = kv.dump_json().unwrap();
     /// let backend = Box::new(MemoryBackend::new());
     /// let mut loaded = Kv::from_json_string(backend, json).unwrap();

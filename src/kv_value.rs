@@ -53,6 +53,12 @@ impl From<String> for KvValue {
     }
 }
 
+impl From<&str> for KvValue {
+    fn from(value: &str) -> Self {
+        KvValue::String(value.to_owned())
+    }
+}
+
 impl From<Vec<KvValue>> for KvValue {
     fn from(value: Vec<KvValue>) -> Self {
         KvValue::Array(value)

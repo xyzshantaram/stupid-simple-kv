@@ -131,11 +131,12 @@ mod kv_integration_tests {
         kv.set(&(1u64,), KvValue::String("foo".to_string()))
             .unwrap();
         kv.set(&(2u64,), KvValue::Bool(true)).unwrap();
-        kv.set(&(3u64,), KvValue::U64(999)).unwrap();
+        kv.set(&(3u64,), KvValue::I64(999)).unwrap();
 
         let orig_entries = { kv.entries().unwrap() };
         // Dump and reload
         let json = kv.dump_json().unwrap();
+        println!("Serialized: {json}");
         let backend2 = Box::new(MemoryBackend::new());
         let mut kv2 = Kv::from_json_string(backend2, json).unwrap();
 

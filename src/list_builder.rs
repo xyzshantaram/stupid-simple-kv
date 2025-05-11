@@ -7,6 +7,9 @@ use crate::{IntoKey, KvBackend, KvKey, KvResult, KvValue};
 /// # Examples
 ///
 /// ```rust
+/// use stupid_simple_kv::{Kv, MemoryBackend, KvValue, IntoKey};
+/// let mut kv = Kv::new(Box::new(MemoryBackend::new()));
+///
 /// // List all pairs with prefix (1, _)
 /// let pairs = kv.list().prefix(&(1u64,)).entries().unwrap();
 ///
@@ -14,14 +17,14 @@ use crate::{IntoKey, KvBackend, KvKey, KvResult, KvValue};
 /// let result = kv.list().start(&(99u64, 2i64)).end(&(99u64, 5i64)).entries().unwrap();
 /// ```
 pub struct KvListBuilder<'a> {
-    pub(crate) backend: &'a mut Box<dyn KvBackend>,
+    pub(crate) backend: &'a dyn KvBackend,
     pub(crate) prefix: Option<&'a dyn IntoKey>,
     pub(crate) start: Option<&'a dyn IntoKey>,
     pub(crate) end: Option<&'a dyn IntoKey>,
 }
 
 impl<'a> KvListBuilder<'a> {
-    pub(crate) fn new(backend: &'a mut Box<dyn KvBackend>) -> Self {
+    pub(crate) fn new(backend: &'a dyn KvBackend) -> Self {
         Self {
             backend,
             prefix: None,
