@@ -8,7 +8,7 @@ pub struct KvKey(pub(crate) Vec<u8>);
 
 impl KvKey {
     fn new() -> Self {
-        Self(Vec::with_capacity(512))
+        Self(Vec::with_capacity(128))
     }
 
     fn push(&mut self, part: &dyn KeySegment) {
