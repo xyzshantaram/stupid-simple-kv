@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use crate::{KvBackend, KvError, KvKey, KvResult};
 use rusqlite::{Connection, params};
 
@@ -15,7 +17,7 @@ impl SqliteBackend {
         Ok(SqliteBackend { conn })
     }
 
-    pub fn file(path: &str) -> KvResult<Self> {
+    pub fn file(path: &Path) -> KvResult<Self> {
         let conn = Connection::open(path).map_err(KvError::SqliteError)?;
         conn.execute_batch(
             "CREATE TABLE IF NOT EXISTS kv (key BLOB PRIMARY KEY, value BLOB NOT NULL);",
