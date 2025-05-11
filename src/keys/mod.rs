@@ -19,7 +19,9 @@ impl KvKey {
         self.0.starts_with(&key.0)
     }
 
-    pub fn next_prefix(&self) -> Option<KvKey> {
+    /// Returns the smallest key that is strictly greater than this one.
+    /// Useful for exclusive upper bounds in range queries.
+    pub fn successor(&self) -> Option<KvKey> {
         let mut bytes = self.0.clone();
         for i in (0..bytes.len()).rev() {
             if bytes[i] != 0xFF {

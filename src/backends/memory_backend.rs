@@ -1,5 +1,4 @@
 use std::collections::BTreeMap;
-use std::ops::Bound;
 use std::sync::{Arc, Mutex};
 
 use crate::{KvBackend, KvKey, KvResult};
@@ -27,13 +26,7 @@ impl KvBackend for MemoryBackend {
         let map = self.map.lock().unwrap();
 
         let range = match (start, end) {
-            (Some(start_key), Some(end_key)) => {
-                if start_key == end_key {
-                    map.range((Bound::Included(start_key), Bound::Included(end_key)))
-                } else {
-                    map.range(start_key..end_key)
-                }
-            }
+            (Some(start_key), Some(end_key)) => map.range(start_key..end_key),
             (Some(start_key), None) => map.range(start_key..),
             (None, Some(end_key)) => map.range(..end_key),
             (None, None) => map.range::<KvKey, _>(..),

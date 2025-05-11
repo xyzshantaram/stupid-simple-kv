@@ -49,7 +49,7 @@ impl<'a> KvListBuilder<'a> {
 
         let (range_start, range_end) = match (prefix_key, start_key, end_key) {
             (Some(prefix), None, None) => {
-                let end = prefix.next_prefix();
+                let end = prefix.successor();
                 (Some(prefix), end)
             }
             (None, Some(start), None) => (Some(start), None),

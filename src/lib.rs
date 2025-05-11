@@ -26,7 +26,7 @@ impl<'a> Kv<'a> {
 
     pub fn get(&self, key: &dyn IntoKey) -> KvResult<Option<KvValue>> {
         let key = key.to_key();
-        let pairs = self.backend.get_range(Some(key.clone()), Some(key))?;
+        let pairs = self.backend.get_range(Some(key.clone()), key.successor())?;
         if pairs.is_empty() {
             Ok(None)
         } else {
