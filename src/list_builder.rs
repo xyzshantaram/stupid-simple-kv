@@ -1,5 +1,18 @@
 use crate::{IntoKey, KvBackend, KvKey, KvResult, KvValue};
 
+/// Builder for flexible queries over a key/value backend.
+///
+/// Use prefix, start, and end keys to define your query range, then call [`KvListBuilder::entries`].
+///
+/// # Examples
+///
+/// ```rust
+/// // List all pairs with prefix (1, _)
+/// let pairs = kv.list().prefix(&(1u64,)).entries().unwrap();
+///
+/// // Range scan from (99,2) up to (99,5)
+/// let result = kv.list().start(&(99u64, 2i64)).end(&(99u64, 5i64)).entries().unwrap();
+/// ```
 pub struct KvListBuilder<'a> {
     pub(crate) backend: &'a mut Box<dyn KvBackend>,
     pub(crate) prefix: Option<&'a dyn IntoKey>,
@@ -17,21 +30,29 @@ impl<'a> KvListBuilder<'a> {
         }
     }
 
+    /// Restrict results to the given key prefix.
     pub fn prefix(&mut self, prefix: &'a dyn IntoKey) -> &mut Self {
         self.prefix = Some(prefix);
         self
     }
 
+    /// Start listing at this key (inclusive).
     pub fn start(&mut self, start: &'a dyn IntoKey) -> &mut Self {
         self.start = Some(start);
         self
     }
 
+    /// End listing at this key (exclusive).
     pub fn end(&mut self, end: &'a dyn IntoKey) -> &mut Self {
         self.end = Some(end);
         self
     }
 
+    /// Run the current query and return key-value pairs.
+    /// Returns all results matching the filter/prefix/bounds.
+    ///
+    /// # Errors
+    /// Returns an error if the combination of selectors is invalid, or if decoding fails.
     pub fn entries(&self) -> KvResult<Vec<(KvKey, KvValue)>> {
         use crate::KvError;
 

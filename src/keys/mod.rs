@@ -3,6 +3,7 @@ pub mod display;
 mod key_decoder;
 mod key_segment;
 
+/// Key type for stupid-simple-kv. Must be order-preserving (lexicographically).
 #[derive(Clone, PartialEq, PartialOrd, Eq, Ord, Debug)]
 pub struct KvKey(pub(crate) Vec<u8>);
 
@@ -36,6 +37,9 @@ impl KvKey {
     }
 }
 
+/// Trait to convert any Rust type or tuple into a key suitable for [`Kv`] operations.
+///
+/// Implemented for `u64`, `i64`, `bool`, `String`, `&str`, [`KvKey`], and upto 16-tuples thereof.
 pub trait IntoKey {
     fn to_key(&self) -> KvKey;
 }
