@@ -35,4 +35,16 @@ impl std::fmt::Display for KvError {
     }
 }
 
+impl From<std::cell::BorrowError> for KvError {
+    fn from(value: std::cell::BorrowError) -> Self {
+        Self::Other(value.to_string())
+    }
+}
+
+impl From<std::cell::BorrowMutError> for KvError {
+    fn from(value: std::cell::BorrowMutError) -> Self {
+        Self::Other(value.to_string())
+    }
+}
+
 impl Error for KvError {}

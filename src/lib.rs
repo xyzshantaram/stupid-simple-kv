@@ -65,7 +65,8 @@ mod kv_value;
 mod list_builder;
 mod tests;
 
-use std::marker::PhantomData;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 pub use crate::backends::{KvBackend, memory_backend::MemoryBackend};
 pub use crate::keys::{KvKey, display};
@@ -92,12 +93,11 @@ pub use crate::backends::sqlite_backend::SqliteBackend;
 /// assert_eq!(out, Some("bar".into()));
 /// ```
 ///
-pub struct Kv<'a> {
-    backend: Box<dyn KvBackend>,
-    _marker: std::marker::PhantomData<&'a ()>,
+pub struct Kv {
+    backend: Rc<RefCell<Box<dyn KvBackend>>>,
 }
 
-impl<'a> Kv<'a> {
+impl Kv {
     /// Create a new [`Kv`] with the given backend.
     ///
     /// Example:
@@ -106,10 +106,8 @@ impl<'a> Kv<'a> {
     /// let mut kv = Kv::new(Box::new(MemoryBackend::new()));
     /// ```
     pub fn new(backend: Box<dyn KvBackend>) -> Self {
-        Self {
-            backend,
-            _marker: PhantomData,
-        }
+        let backend = Rc::new(RefCell::new(backend));
+        Self { backend }
     }
 
     /// Retrieve the value for a given key. Returns `Ok(Some(KvValue))` if present, `Ok(None)` if not present.
@@ -122,7 +120,10 @@ impl<'a> Kv<'a> {
     /// ```
     pub fn get(&self, key: &dyn IntoKey) -> KvResult<Option<KvValue>> {
         let key = key.to_key();
-        let pairs = self.backend.get_range(Some(key.clone()), key.successor())?;
+        let pairs = self
+            .backend
+            .try_borrow()?
+            .get_range(Some(key.clone()), key.successor())?;
         if pairs.is_empty() {
             Ok(None)
         } else {
@@ -154,10 +155,10 @@ impl<'a> Kv<'a> {
         if let Some(v) = value {
             let encoded = bincode::encode_to_vec(v, bincode::config::standard())
                 .map_err(KvError::ValEncodeError)?;
-            self.backend.set(key, Some(encoded))
+            self.backend.try_borrow_mut()?.set(key, Some(encoded))
         } else {
             // Remove the key completely!
-            self.backend.set(key, None)
+            self.backend.try_borrow_mut()?.set(key, None)
         }
     }
 
@@ -191,7 +192,7 @@ impl<'a> Kv<'a> {
     /// ```
     pub fn entries(&mut self) -> KvResult<Vec<(KvKey, KvValue)>> {
         KvListBuilder {
-            backend: &*self.backend,
+            backend: self.backend.clone(),
             start: None,
             end: None,
             prefix: None,
@@ -209,13 +210,13 @@ impl<'a> Kv<'a> {
     /// // List all keys starting with (1, _)
     /// let results = kv.list().prefix(&(1u64,)).entries().unwrap();
     /// ```
-    pub fn list(&'a self) -> KvListBuilder<'a> {
-        KvListBuilder::new(&*self.backend)
+    pub fn list(&self) -> KvListBuilder {
+        KvListBuilder::new(self.backend.clone())
     }
 
     /// Dump all keys and values as a pretty, parseable JSON value.
     /// Useful for debugging or migration. Keys are debug-formatted.
-    pub fn to_serde_json(&'a mut self) -> KvResult<serde_json::Value> {
+    pub fn to_serde_json(&mut self) -> KvResult<serde_json::Value> {
         let mut map = serde_json::Map::new();
         for (key, value) in self.entries()? {
             let display = to_display_string(&key.0).ok_or(KvError::KeyDecodeError(format!(
@@ -247,7 +248,7 @@ impl<'a> Kv<'a> {
 
     /// Dump the entire database to a JSON string.
     /// See [`from_json_string`] for restoring.
-    pub fn dump_json(&'a mut self) -> KvResult<String> {
+    pub fn dump_json(&mut self) -> KvResult<String> {
         let json = self.to_serde_json()?;
         Ok(json.to_string())
     }

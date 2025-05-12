@@ -117,7 +117,7 @@ mod kv_integration_tests {
             let tup = (777u64, i);
             kv.set(&tup, KvValue::I64(i))?;
         }
-        kv.backend.clear()?;
+        kv.backend.try_borrow_mut()?.clear()?;
         let items = kv.entries()?;
         assert_eq!(items.len(), 0);
         Ok(())

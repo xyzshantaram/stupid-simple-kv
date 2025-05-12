@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use crate::{IntoKey, KvBackend, KvKey, KvResult, KvValue};
 
 /// Builder for flexible queries over a key/value backend.
@@ -16,15 +18,15 @@ use crate::{IntoKey, KvBackend, KvKey, KvResult, KvValue};
 /// // Range scan from (99,2) up to (99,5)
 /// let result = kv.list().start(&(99u64, 2i64)).end(&(99u64, 5i64)).entries().unwrap();
 /// ```
-pub struct KvListBuilder<'a> {
-    pub(crate) backend: &'a dyn KvBackend,
-    pub(crate) prefix: Option<&'a dyn IntoKey>,
-    pub(crate) start: Option<&'a dyn IntoKey>,
-    pub(crate) end: Option<&'a dyn IntoKey>,
+pub struct KvListBuilder {
+    pub(crate) backend: Rc<RefCell<Box<dyn KvBackend>>>,
+    pub(crate) prefix: Option<KvKey>,
+    pub(crate) start: Option<KvKey>,
+    pub(crate) end: Option<KvKey>,
 }
 
-impl<'a> KvListBuilder<'a> {
-    pub(crate) fn new(backend: &'a dyn KvBackend) -> Self {
+impl KvListBuilder {
+    pub(crate) fn new(backend: Rc<RefCell<Box<dyn KvBackend>>>) -> Self {
         Self {
             backend,
             prefix: None,
@@ -34,20 +36,20 @@ impl<'a> KvListBuilder<'a> {
     }
 
     /// Restrict results to the given key prefix.
-    pub fn prefix(&mut self, prefix: &'a dyn IntoKey) -> &mut Self {
-        self.prefix = Some(prefix);
+    pub fn prefix(&mut self, prefix: &dyn IntoKey) -> &mut Self {
+        self.prefix = Some(prefix.to_key());
         self
     }
 
     /// Start listing at this key (inclusive).
-    pub fn start(&mut self, start: &'a dyn IntoKey) -> &mut Self {
-        self.start = Some(start);
+    pub fn start(&mut self, start: &dyn IntoKey) -> &mut Self {
+        self.start = Some(start.to_key());
         self
     }
 
     /// End listing at this key (exclusive).
-    pub fn end(&mut self, end: &'a dyn IntoKey) -> &mut Self {
-        self.end = Some(end);
+    pub fn end(&mut self, end: &dyn IntoKey) -> &mut Self {
+        self.end = Some(end.to_key());
         self
     }
 
@@ -59,34 +61,31 @@ impl<'a> KvListBuilder<'a> {
     pub fn entries(&self) -> KvResult<Vec<(KvKey, KvValue)>> {
         use crate::KvError;
 
-        let (p, s, e) = (self.prefix, self.start, self.end);
-
         // Disallow all three present.
-        if p.is_some() && s.is_some() && e.is_some() {
+        if self.prefix.is_some() && self.start.is_some() && self.end.is_some() {
             return Err(KvError::InvalidSelector);
         }
 
-        // Helper: convert options to KvKey
-        let prefix_key = p.map(|x| x.to_key());
-        let start_key = s.map(|x| x.to_key());
-        let end_key = e.map(|x| x.to_key());
-
-        let (range_start, range_end) = match (prefix_key, start_key, end_key) {
-            (Some(prefix), None, None) => {
-                let end = prefix.successor();
-                (Some(prefix), end)
-            }
-            (None, Some(start), None) => (Some(start), None),
-            (None, None, Some(end)) => (None, Some(end)),
-            (Some(_prefix), Some(start), None) => (Some(start), None), // start wins
-            (Some(prefix), None, Some(end)) => (Some(prefix), Some(end)),
-            (None, Some(start), Some(end)) => (Some(start), Some(end)),
-            (None, None, None) => (None, None),
-            _ => return Err(KvError::InvalidSelector),
-        };
+        let (range_start, range_end) =
+            match (self.prefix.clone(), self.start.clone(), self.end.clone()) {
+                (Some(prefix), None, None) => {
+                    let end = prefix.successor();
+                    (Some(prefix), end)
+                }
+                (None, Some(start), None) => (Some(start), None),
+                (None, None, Some(end)) => (None, Some(end)),
+                (Some(_prefix), Some(start), None) => (Some(start), None), // start wins
+                (Some(prefix), None, Some(end)) => (Some(prefix), Some(end)),
+                (None, Some(start), Some(end)) => (Some(start), Some(end)),
+                (None, None, None) => (None, None),
+                _ => return Err(KvError::InvalidSelector),
+            };
 
         // Fetch the range (unbounded if end is None)
-        let items = self.backend.get_range(range_start, range_end)?;
+        let items = self
+            .backend
+            .try_borrow()?
+            .get_range(range_start, range_end)?;
 
         let mut result = Vec::with_capacity(items.len());
         for (k, v) in items {
