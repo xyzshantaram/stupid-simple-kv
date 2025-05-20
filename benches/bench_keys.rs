@@ -1,21 +1,16 @@
-#![feature(test)]
-
-extern crate test;
-
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use stupid_simple_kv::IntoKey;
 
-#[cfg(test)]
-mod bench_keys {
-    use super::*;
-    use test::{Bencher, black_box};
-
-    #[bench]
-    fn bench_key_encoding(b: &mut Bencher) {
-        let items: Vec<_> = (0..10000u64).collect();
+fn bench_key_encoding(c: &mut Criterion) {
+    let items: Vec<_> = (0..10000u64).collect();
+    c.bench_function("key_encoding", |b| {
         b.iter(|| {
             for &i in &items {
                 black_box(("foo", i, "bar", true).to_key());
             }
         });
-    }
+    });
 }
+
+criterion_group!(keys_benches, bench_key_encoding);
+criterion_main!(keys_benches);

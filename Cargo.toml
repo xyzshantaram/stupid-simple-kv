@@ -18,9 +18,21 @@ rusqlite = { version = "0.35", optional = true, features = ["blob"] }
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = "1.0.140"
 
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+
 [features]
 default = ["sqlite"]
 sqlite = ["rusqlite"]
 
-[profile.bench]
-debug = true
+[[bench]]
+name = "bench_keys"
+harness = false
+
+[[bench]]
+name = "bench_sqlite"
+harness = false
+
+[[bench]]
+name = "bench_memory"
+harness = false
